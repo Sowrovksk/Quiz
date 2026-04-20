@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Quiz App</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  transition: 0.5s;
+}
+
+/* FULL SCREEN EFFECT */
+body.right-glow {
+  background: linear-gradient(135deg, #0f5132, #198754, #2ecc71);
+}
+
+body.wrong-glow {
+  background: linear-gradient(135deg, #5a0b0b, #b30000, #ff4d4d);
+}
+
+/* TOP BAR */
+.topbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  background: rgba(0,0,0,0.4);
+  color: #00e5ff;
+  text-shadow: 0 0 10px #00e5ff;
+}
+
+/* BOTTOM DEVELOPER */
+.developer {
+  position: fixed;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  color: #ff00ff;
+  text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+  animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+  from {transform: scale(1); opacity: 0.7;}
+  to {transform: scale(1.05); opacity: 1;}
+}
+
+/* CONTAINER */
+.container {
+  background: rgba(255,255,255,0.08);
+  padding: 22px;
+  border-radius: 18px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+}
+
+/* INPUT */
+input {
+  padding: 12px;
+  width: 80%;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+}
+
+/* BUTTON */
+button {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 18px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #00c6ff, #0072ff);
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+/* OPTIONS */
+.option {
+  display: block;
+  background: #1e1e1e;
+  margin: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.option:hover {
+  background: #333;
+  transform: scale(1.02);
+}
+
+/* TIMER */
+.timer {
+  margin: 10px;
+  font-size: 18px;
+  color: #00c6ff;
+}
+
+/* POPUP */
+.popup {
+  position: fixed;
+  top: 60px;
+  padding: 15px 25px;
+  border-radius: 12px;
+  font-size: 22px;
+  font-weight: bold;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: 0.4s;
+}
+
+.right {
+  background: #28a745;
+}
+
+.wrong {
+  background: #dc3545;
+}
+
+.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">TG CYBER FORCE</div>
+<div class="popup" id="popup"></div>
+
+<!-- START -->
+<div class="container" id="startBox">
+  <h2>Enter Your Name</h2>
+  <input type="text" id="username" placeholder="Your Name">
+  <br>
+  <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<!-- QUIZ -->
+<div class="container" id="quizBox" style="display:none;">
+  <div class="timer">Time: <span id="time">30</span>s</div>
+  <h3 id="question"></h3>
+  <div id="options"></div>
+</div>
+
+<!-- RESULT -->
+<div class="container" id="resultBox" style="display:none;">
+  <h2>Result</h2>
+  <p id="resultText"></p>
+</div>
+
+<div class="developer">🔥 Developer Sayan Rhustan 🔥</div>
+
+<script>
+let questions = [
+  {q:"HTML stands for?", o:["Hyper Text Markup Language","Hot Mail","How To Make"], a:0},
+  {q:"CSS used for?", o:["Structure","Style","Database"], a:1},
+  {q:"JS is?", o:["Language","Framework","Database"], a:0},
+  {q:"2+2?", o:["3","4","5"], a:1},
+  {q:"Capital of Bangladesh?", o:["Dhaka","Delhi","Lahore"], a:0}
+];
+
+let index = 0;
+let score = 0;
+let wrong = 0;
+let timer;
+let timeLeft = 30;
+let username = "";
+let locked = false;
+
+function startQuiz() {
+  username = document.getElementById("username").value;
+  if(username === "") return alert("Enter name");
+
+  document.getElementById("startBox").style.display = "none";
+  document.getElementById("quizBox").style.display = "block";
+
+  loadQuestion();
+}
+
+function loadQuestion() {
+  locked = false;
+  clearInterval(timer);
+  timeLeft = 30;
+
+  document.getElementById("time").innerText = timeLeft;
+
+  let q = questions[index];
+  document.getElementById("question").innerText = q.q;
+
+  let html = "";
+  q.o.forEach((opt, i) => {
+    html += `<div class="option" onclick="selectAnswer(${i})">${opt}</div>`;
+  });
+
+  document.getElementById("options").innerHTML = html;
+
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("time").innerText = timeLeft;
+
+    if(timeLeft === 0) {
+      wrong++;
+      nextQuestion();
+    }
+  }, 1000);
+}
+
+function selectAnswer(i) {
+  if(locked) return;
+  locked = true;
+
+  let correct = questions[index].a;
+
+  if(i === correct) {
+    score++;
+    showPopup("RIGHT ✔", "right");
+    document.body.classList.add("right-glow");
+  } else {
+    wrong++;
+    showPopup("WRONG ❌", "wrong");
+    document.body.classList.add("wrong-glow");
+  }
+
+  setTimeout(() => {
+    document.body.classList.remove("right-glow");
+    document.body.classList.remove("wrong-glow");
+    nextQuestion();
+  }, 900);
+}
+
+function showPopup(text, type) {
+  let popup = document.getElementById("popup");
+  popup.innerText = text;
+  popup.className = "popup " + type + " show";
+
+  setTimeout(() => {
+    popup.classList.remove("show");
+  }, 800);
+}
+
+function nextQuestion() {
+  clearInterval(timer);
+  index++;
+
+  if(index < questions.length) {
+    loadQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById("quizBox").style.display = "none";
+  document.getElementById("resultBox").style.display = "block";
+
+  document.getElementById("resultText").innerHTML = `
+    Name: ${username}<br>
+    Score: ${score}<br>
+    Correct: ${score}<br>
+    Wrong: ${wrong}
+  `;
+}
+</script>
+
+</body>
+</html>
